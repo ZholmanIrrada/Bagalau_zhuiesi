@@ -9,8 +9,8 @@
     h1, h2, h3 { color: #2c3e50; }
     table { border-collapse: collapse; width: 100%; background-color: #fff; margin-bottom: 20px; border: 2px solid #000; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    input[type="number"] { width: 60px; }
-    #feedback, #feedbackList { background-color: #fff; padding: 15px; border-radius: 8px; margin-top: 20px; }
+    input[type="number"], input[type="text"] { width: 100%; padding: 5px; margin: 5px 0; border-radius: 4px; border: 1px solid #ccc; }
+    #feedback, #feedbackList, #generalFeedback { background-color: #fff; padding: 15px; border-radius: 8px; margin-top: 20px; }
     textarea { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
     button { padding: 10px 20px; border: none; background-color: #3498db; color: white; border-radius: 4px; cursor: pointer; }
     button:hover { background-color: #2980b9; }
@@ -20,18 +20,16 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
   <script>
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCuCW1G6bqxb8EI_YZZ2dpqnyDC1FXaRrw",
-  authDomain: "bagalausaity.firebaseapp.com",
-  databaseURL: "https://bagalausaity-default-rtdb.firebaseio.com",
-  projectId: "bagalausaity",
-  storageBucket: "bagalausaity.firebasestorage.app",
-  messagingSenderId: "159427702781",
-  appId: "1:159427702781:web:d56f44c70ec7ccbaeaf394",
-  measurementId: "G-KV7WSEHL3W"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuCW1G6bqxb8EI_YZZ2dpqnyDC1FXaRrw",
+      authDomain: "bagalausaity.firebaseapp.com",
+      databaseURL: "https://bagalausaity-default-rtdb.firebaseio.com",
+      projectId: "bagalausaity",
+      storageBucket: "bagalausaity.appspot.com",
+      messagingSenderId: "159427702781",
+      appId: "1:159427702781:web:d56f44c70ec7ccbaeaf394",
+      measurementId: "G-KV7WSEHL3W"
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
   </script>
@@ -54,7 +52,7 @@ const firebaseConfig = {
     <tbody id="participantsBody"></tbody>
   </table>
 
-  <!-- Пікір формасы -->
+  <!-- Кезеңдік пікір формасы -->
   <h2>Сұрақтар бойынша пікір</h2>
   <div id="feedback">
     <form id="feedbackForm">
@@ -76,6 +74,17 @@ const firebaseConfig = {
 
   <button onclick="showFeedbacks()">Пікірлерді көру</button>
   <div id="feedbackList"></div>
+
+  <!-- Жалпы пікір -->
+  <h2>Жалпы пікір қалдыру</h2>
+  <div id="generalFeedback">
+    <form id="feedback-form">
+      <input type="text" id="name" placeholder="Атыңыз" required />
+      <input type="number" id="rating" min="1" max="5" placeholder="Баға (1-5)" required />
+      <textarea id="comment" placeholder="Пікіріңіз" required></textarea>
+      <button type="submit">Жіберу</button>
+    </form>
+  </div>
 
   <h2>Нәтижелер</h2>
   <button onclick="showResults()">Нәтижелерді көру (Құпия сөз)</button>
@@ -107,7 +116,7 @@ const firebaseConfig = {
       tbody.appendChild(row);
     });
 
-    // Пікірді сақтау
+    // Кезеңдік пікірді сақтау
     document.getElementById("feedbackForm").addEventListener("submit", function (e) {
       e.preventDefault();
       const formData = new FormData(this);
@@ -115,14 +124,31 @@ const firebaseConfig = {
       formData.forEach((value, key) => {
         feedback[key] = value.trim();
       });
-      const newRef = db.ref("feedbacks").push();
-      newRef.set(feedback).then(() => {
+      db.ref("feedbacks").push(feedback).then(() => {
         alert("Пікіріңіз сақталды!");
         this.reset();
       });
     });
 
-    // Пікірлерді шығару
+    // Жалпы пікірді сақтау
+    document.getElementById("feedback-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const rating = parseInt(document.getElementById("rating").value);
+      const comment = document.getElementById("comment").value.trim();
+
+      if (name && rating && comment) {
+        const feedback = { name, rating, comment, timestamp: new Date().toISOString() };
+        db.ref("generalFeedbacks").push(feedback).then(() => {
+          alert("Жалпы пікіріңіз жіберілді!");
+          document.getElementById("feedback-form").reset();
+        });
+      } else {
+        alert("Барлық өрісті толтырыңыз!");
+      }
+    });
+
+    // Кезеңдік пікірлерді шығару
     function showFeedbacks() {
       db.ref("feedbacks").once("value").then(snapshot => {
         const container = document.getElementById("feedbackList");
