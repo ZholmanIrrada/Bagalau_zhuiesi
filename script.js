@@ -1,34 +1,41 @@
-function calculateScores() {
-    const rows = document.querySelectorAll("#scoreTable tbody tr");
-    const results = document.getElementById("resultsList");
-    results.innerHTML = "";
+// Firebase конфигурациясы
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
 
-    rows.forEach((row) => {
-        const inputs = row.querySelectorAll(".score");
-        let total = 0;
-        inputs.forEach(input => {
-            let val = parseInt(input.value);
-            if (!isNaN(val) && val >= 1 && val <= 3) {
-                total += val;
-            }
-        });
-        const li = document.createElement("li");
-        li.textContent = `${row.cells[0].textContent}: Жалпы ұпай – ${total}`;
-        results.appendChild(li);
-    });
-}
+// Firebase-ті инициализациялау
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-function showResults() {
-    const password = prompt("Құпия сөзді енгізіңіз:");
-    if (password === "Irrada") { // Құпия сөз осында
-        document.getElementById("resultsSection").style.display = "block";
-    } else {
-        alert("Құпия сөз дұрыс емес!");
-    }
-}
-
+// Бағалау формасына оқиға тіркеу
 document.getElementById("feedbackForm").addEventListener("submit", function(e) {
     e.preventDefault();
-    alert("Пікіріңіз қабылданды! Рақмет!");
-    this.reset();
+
+    const formData = {};
+
+    // Барлық input (type="number") элементтерін оқу
+    document.querySelectorAll("input[type='number']").forEach(input => {
+        formData[input.name] = parseInt(input.value) || 0;
+    });
+
+    // Барлық textarea (пікір) элементтерін оқу
+    document.querySelectorAll("textarea").forEach(textarea => {
+        formData[textarea.name] = textarea.value.trim();
+    });
+
+    // Firestore-ға сақтау
+    db.collection("feedbacks").add(formData)
+        .then(() => {
+            alert("Пікіріңіз сәтті сақталды! Рақмет!");
+            document.getElementById("feedbackForm").reset();
+        })
+        .catch((error) => {
+            console.error("Сақтау кезінде қате шықты: ", error);
+            alert("Қате орын алды. Қайта көріңіз.");
+        });
 });
