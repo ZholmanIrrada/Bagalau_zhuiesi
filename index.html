@@ -10,34 +10,33 @@
     table { border-collapse: collapse; width: 100%; background-color: #fff; margin-bottom: 20px; border: 2px solid #000; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
     input[type="number"], input[type="text"] { width: 100%; padding: 5px; margin: 5px 0; border-radius: 4px; border: 1px solid #ccc; }
-    #feedback, #feedbackList { background-color: #fff; padding: 15px; border-radius: 8px; margin-top: 20px; }
+    #feedback, #feedbackList, #generalFeedback { background-color: #fff; padding: 15px; border-radius: 8px; margin-top: 20px; }
     textarea { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
     button { padding: 10px 20px; border: none; background-color: #3498db; color: white; border-radius: 4px; cursor: pointer; }
     button:hover { background-color: #2980b9; }
   </style>
 
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCuCW1G6bqxb8EI_YZZ2dpqnyDC1FXaRrw",
-      authDomain: "bagalausaity.firebaseapp.com",
-      databaseURL: "https://bagalausaity-default-rtdb.firebaseio.com",
-      projectId: "bagalausaity",
-      storageBucket: "bagalausaity.firebasestorage.app",
-      messagingSenderId: "159427702781",
-      appId: "1:159427702781:web:d56f44c70ec7ccbaeaf394",
-      measurementId: "G-KV7WSEHL3W"
-    };
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCuCW1G6bqxb8EI_YZZ2dpqnyDC1FXaRrw",
+  authDomain: "bagalausaity.firebaseapp.com",
+  databaseURL: "https://bagalausaity-default-rtdb.firebaseio.com",
+  projectId: "bagalausaity",
+  storageBucket: "bagalausaity.firebasestorage.app",
+  messagingSenderId: "159427702781",
+  appId: "1:159427702781:web:d56f44c70ec7ccbaeaf394",
+  measurementId: "G-KV7WSEHL3W"
+};
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
   </script>
 </head>
 <body>
   <h1>Сайыс бағалау жүйесі</h1>
-  <p><strong>1 –кезең: Шығармашылық жоба (дарынды баланы дамыту жолы)</strong></p>
-  <p><strong>2 –кезең: Дарынды баламен жұмыс (видео,немесе слайд)</strong></p>
-  <p><strong>3 –кезең: «Қара сөздің даналығы» талдау</strong></p>
 
   <!-- Қатысушылар кестесі -->
   <table id="scoreTable">
@@ -54,6 +53,41 @@
     <tbody id="participantsBody"></tbody>
   </table>
 
+  <!-- Кезеңдік пікір формасы -->
+  <h2>Сұрақтар бойынша пікір</h2>
+  <div id="feedback">
+    <form id="feedbackForm">
+      <label>1-кезеңде қандай идея өзіңізге ұнады?</label><br>
+      <textarea name="q1" rows="2"></textarea><br><br>
+      <label>1-кезең бойынша ұсынысыңыз</label><br>
+      <textarea name="q2" rows="2"></textarea><br><br>
+      <label>2-кезеңде қандай әдіс сізге пайдалы болды?</label><br>
+      <textarea name="q3" rows="2"></textarea><br><br>
+      <label>2-кезең бойынша ұсынысыңыз</label><br>
+      <textarea name="q4" rows="2"></textarea><br><br>
+      <label>3-кезеңде қандай ой ерекше әсер етті?</label><br>
+      <textarea name="q5" rows="2"></textarea><br><br>
+      <label>3-кезең бойынша ұсынысыңыз</label><br>
+      <textarea name="q6" rows="2"></textarea><br><br>
+      <button type="submit">Пікірді жіберу</button>
+    </form>
+  </div>
+
+  <button onclick="showFeedbacks()">Пікірлерді көру</button>
+  <div id="feedbackList"></div>
+
+  <!-- Жалпы пікір -->
+  <h2>Жалпы пікір қалдыру</h2>
+  <div id="generalFeedback">
+    <form id="feedback-form">
+      <input type="text" id="name" placeholder="Атыңыз" required />
+      <input type="number" id="rating" min="1" max="5" placeholder="Баға (1-5)" required />
+      <textarea id="comment" placeholder="Пікіріңіз" required></textarea>
+      <button type="submit">Жіберу</button>
+    </form>
+  </div>
+
+  <h2>Нәтижелер</h2>
   <button onclick="showResults()">Нәтижелерді көру (Құпия сөз)</button>
   <div id="resultsSection" style="display:none;">
     <button onclick="calculateScores()">Жалпы ұпайды есептеу</button>
@@ -72,17 +106,66 @@
     const tbody = document.getElementById("participantsBody");
     participants.forEach(name => {
       const row = document.createElement("tr");
-      row.innerHTML = `
+      row.innerHTML = 
         <td>${name}</td>
         <td><input type="number" min="1" max="3" class="score"></td>
         <td><input type="number" min="1" max="3" class="score"></td>
         <td><input type="number" min="1" max="3" class="score"></td>
         <td><input type="number" min="1" max="3" class="score"></td>
         <td><input type="number" min="1" max="3" class="score"></td>
-      `;
+      ;
       tbody.appendChild(row);
     });
 
+    // Кезеңдік пікірді сақтау
+    document.getElementById("feedbackForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const feedback = {};
+      formData.forEach((value, key) => {
+        feedback[key] = value.trim();
+      });
+      db.ref("feedbacks").push(feedback).then(() => {
+        alert("Пікіріңіз сақталды!");
+        this.reset();
+      });
+    });
+
+    // Жалпы пікірді сақтау
+    document.getElementById("feedback-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const rating = parseInt(document.getElementById("rating").value);
+      const comment = document.getElementById("comment").value.trim();
+
+      if (name && rating && comment) {
+        const feedback = { name, rating, comment, timestamp: new Date().toISOString() };
+        db.ref("generalFeedbacks").push(feedback).then(() => {
+          alert("Жалпы пікіріңіз жіберілді!");
+          document.getElementById("feedback-form").reset();
+        });
+      } else {
+        alert("Барлық өрісті толтырыңыз!");
+      }
+    });
+
+    // Кезеңдік пікірлерді шығару
+    function showFeedbacks() {
+      db.ref("feedbacks").once("value").then(snapshot => {
+        const container = document.getElementById("feedbackList");
+        container.innerHTML = "<h3>Барлық пікірлер:</h3>";
+        const list = document.createElement("ul");
+        snapshot.forEach(child => {
+          const f = child.val();
+          const li = document.createElement("li");
+          li.textContent = ${f.q1} | ${f.q2} | ${f.q3} | ${f.q4} | ${f.q5} | ${f.q6};
+          list.appendChild(li);
+        });
+        container.appendChild(list);
+      });
+    }
+
+    // Нәтижелерді көрсету
     function showResults() {
       const password = prompt("Құпия сөзді енгізіңіз:");
       if (password === "Irrada") {
@@ -92,6 +175,7 @@
       }
     }
 
+    // Ұпайларды есептеу
     function calculateScores() {
       const rows = document.querySelectorAll("#scoreTable tbody tr");
       const results = document.getElementById("resultsList");
@@ -105,7 +189,7 @@
           if (!isNaN(val) && val >= 1 && val <= 3) total += val;
         });
         const li = document.createElement("li");
-        li.textContent = `${row.cells[0].textContent}: Жалпы ұпай – ${total}`;
+        li.textContent = ${row.cells[0].textContent}: Жалпы ұпай – ${total};
         results.appendChild(li);
       });
     }
