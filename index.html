@@ -1,92 +1,114 @@
 <!DOCTYPE html>
 <html lang="kk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Бағалау формасы</title>
+  <meta charset="UTF-8">
+  <title>Сайыс бағалау жүйесі</title>
+  <link rel="stylesheet" href="style.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    .section {
-      margin-bottom: 30px;
-    }
-    .section h2 {
-      color: #333;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-    }
-    button {
-      padding: 10px 20px;
-      margin-top: 20px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .kезеңдер {
-      background-color: #f2f2f2;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f4f8; }
+    h1, h2, h3 { color: #2c3e50; }
+    table { border-collapse: collapse; width: 100%; background-color: #fff; margin-bottom: 20px; border: 2px solid #000; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    input[type="number"], input[type="text"] { width: 100%; padding: 5px; margin: 5px 0; border-radius: 4px; border: 1px solid #ccc; }
+    #feedback, #feedbackList { background-color: #fff; padding: 15px; border-radius: 8px; margin-top: 20px; }
+    textarea { width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
+    button { padding: 10px 20px; border: none; background-color: #3498db; color: white; border-radius: 4px; cursor: pointer; }
+    button:hover { background-color: #2980b9; }
   </style>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuCW1G6bqxb8EI_YZZ2dpqnyDC1FXaRrw",
+      authDomain: "bagalausaity.firebaseapp.com",
+      databaseURL: "https://bagalausaity-default-rtdb.firebaseio.com",
+      projectId: "bagalausaity",
+      storageBucket: "bagalausaity.firebasestorage.app",
+      messagingSenderId: "159427702781",
+      appId: "1:159427702781:web:d56f44c70ec7ccbaeaf394",
+      measurementId: "G-KV7WSEHL3W"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
 </head>
 <body>
+  <h1>Сайыс бағалау жүйесі</h1>
+  <p><strong>1 –кезең: Шығармашылық жоба (дарынды баланы дамыту жолы)</strong></p>
+  <p><strong>2 –кезең: Дарынды баламен жұмыс (видео,немесе слайд)</strong></p>
+  <p><strong>3 –кезең: «Қара сөздің даналығы» талдау</strong></p>
 
-  <div class="kезеңдер">
-    <p><strong>1 –кезең:</strong> Шығармашылық жоба (дарынды баланы дамыту жолы)</p>
-    <p><strong>2 –кезең:</strong> Дарынды баламен жұмыс (видео, немемесе слайд)</p>
-    <p><strong>3 –кезең:</strong> «Қара сөздің даналығы» талдау</p>
+  <!-- Қатысушылар кестесі -->
+  <table id="scoreTable">
+    <thead>
+      <tr>
+        <th>Қатысушы</th>
+        <th>Жоба мақсаты мен мазмұны</th>
+        <th>Жоба әдістері</th>
+        <th>Бала мен педагог үйлесімі</th>
+        <th>Абаймен байланыс</th>
+        <th>Талдау мазмұны</th>
+      </tr>
+    </thead>
+    <tbody id="participantsBody"></tbody>
+  </table>
+
+  <button onclick="showResults()">Нәтижелерді көру (Құпия сөз)</button>
+  <div id="resultsSection" style="display:none;">
+    <button onclick="calculateScores()">Жалпы ұпайды есептеу</button>
+    <ul id="resultsList"></ul>
   </div>
-
-  <div class="section">
-    <h2>Қатысушыны бағалау</h2>
-    <label>Қатысушының аты-жөні:</label>
-    <input type="text" id="name" />
-
-    <label>1-кезең ұпайы (0-10):</label>
-    <input type="number" id="score1" min="0" max="10" />
-
-    <label>2-кезең ұпайы (0-10):</label>
-    <input type="number" id="score2" min="0" max="10" />
-
-    <label>3-кезең ұпайы (0-10):</label>
-    <input type="number" id="score3" min="0" max="10" />
-  </div>
-
-  <button onclick="submitData()">Сақтау</button>
 
   <script>
-    function submitData() {
-      const name = document.getElementById("name").value;
-      const score1 = document.getElementById("score1").value;
-      const score2 = document.getElementById("score2").value;
-      const score3 = document.getElementById("score3").value;
+    const participants = [
+      "Алдабергенва Раушан", "Жұмахметов Ерқасым", "Ерімбетова Лаура",
+      "Құрманбаева Роза", "Сүлейменва Базаркүл", "Тұрсынова Назгүл",
+      "Ахметова Райкүл", "Барпаяқова Гүлхан", "Мырзабекова Гүлсім",
+      "Байжанова Жұпаркүл", "Үсенова Жанар", "Көбекова Гүлнүр",
+      "Қартабай Айдана", "Саламатова Күлайым"
+    ];
 
-      const data = {
-        name,
-        score1,
-        score2,
-        score3
-      };
+    const tbody = document.getElementById("participantsBody");
+    participants.forEach(name => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${name}</td>
+        <td><input type="number" min="1" max="3" class="score"></td>
+        <td><input type="number" min="1" max="3" class="score"></td>
+        <td><input type="number" min="1" max="3" class="score"></td>
+        <td><input type="number" min="1" max="3" class="score"></td>
+        <td><input type="number" min="1" max="3" class="score"></td>
+      `;
+      tbody.appendChild(row);
+    });
 
-      // Мұнда Firebase-ке немесе басқа жерге жіберу логикасы болады
-      console.log("Жіберілген дерек:", data);
-      alert("Бағалау сәтті сақталды!");
+    function showResults() {
+      const password = prompt("Құпия сөзді енгізіңіз:");
+      if (password === "Irrada") {
+        document.getElementById("resultsSection").style.display = "block";
+      } else {
+        alert("Қате құпия сөз!");
+      }
+    }
+
+    function calculateScores() {
+      const rows = document.querySelectorAll("#scoreTable tbody tr");
+      const results = document.getElementById("resultsList");
+      results.innerHTML = "";
+
+      rows.forEach((row) => {
+        const inputs = row.querySelectorAll(".score");
+        let total = 0;
+        inputs.forEach(input => {
+          let val = parseInt(input.value);
+          if (!isNaN(val) && val >= 1 && val <= 3) total += val;
+        });
+        const li = document.createElement("li");
+        li.textContent = `${row.cells[0].textContent}: Жалпы ұпай – ${total}`;
+        results.appendChild(li);
+      });
     }
   </script>
-
 </body>
 </html>
