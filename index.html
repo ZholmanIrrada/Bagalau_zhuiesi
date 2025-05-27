@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <title>Сайыс бағалау жүйесі</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f4f8;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: #fff;
+            margin-bottom: 20px;
+            border: 2px solid #000;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        input[type="number"] {
+            width: 60px;
+        }
+
+        #feedback {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #3498db;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #feedbackList {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Сайыс бағалау жүйесі</h1>
+
+    <!-- Қатысушылар кестесі -->
+    <table id="scoreTable">
+        <thead>
+            <tr>
+                <th>Қатысушы</th>
+                <th>Жоба мақсаты мен мазмұны</th>
+                <th>Жоба әдістері</th>
+                <th>Бала мен педагог үйлесімі</th>
+                <th>Абаймен байланыс</th>
+                <th>Талдау мазмұны</th>
+            </tr>
+        </thead>
+        <tbody id="participantsBody"></tbody>
+    </table>
+
+    <!-- Пікір формасы -->
+    <h2>Сұрақтар бойынша пікір</h2>
+    <div id="feedback">
+        <form id="feedbackForm">
+            <label>1-кезеңде қандай идея өзіңізге ұнады?</label><br>
+            <textarea rows="3"></textarea><br><br>
+
+            <label>1-кезең бойынша ұсынысыңыз</label><br>
+            <textarea rows="3"></textarea><br><br>
+
+            <label>2-кезеңде қандай әдіс сізге пайдалы болды?</label><br>
+            <textarea rows="3"></textarea><br><br>
+
+            <label>2-кезең бойынша ұсынысыңыз</label><br>
+            <textarea rows="3"></textarea><br><br>
+
+            <label>3-кезеңде қандай ой сізге ерекше әсер етті?</label><br>
+            <textarea rows="3"></textarea><br><br>
+
+            <label>3-кезең бойынша ұсынысыңыз</label><br>
+            <textarea rows="3"></textarea><br><br>
+
+            <button type="submit">Пікірді жіберу</button>
+        </form>
+    </div>
+
+    <!-- Пікірлерді көру -->
+    <button onclick="showFeedbacks()">Пікірлерді көру</button>
+    <div id="feedbackList"></div>
+
+    <!-- Нәтиже бөлімі -->
+    <h2>Нәтижелер</h2>
+    <button onclick="showResults()">Нәтижелерді көру (Құпия сөз)</button>
+    <div id="resultsSection" style="display:none;">
+        <button onclick="calculateScores()">Жалпы ұпайды есептеу</button>
+        <ul id="resultsList"></ul>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Қатысушыларды шығару
+        const participants = [
+            "Алдабергенва Раушан",
+            "Жұмахметов Ерқасым",
+            "Ерімбетова Лаура",
+            "Құрманбаева Роза",
+            "Сүлейменва Базаркүл",
+            "Тұрсынова Назгүл",
+            "Ахметова Райкүл",
+            "Барпаяқова Гүлхан",
+            "Мырзабекова Гүлсім",
+            "Байжанова Жұпаркүл",
+            "Үсенова Жанар",
+            "Көбекова Гүлнүр",
+            "Қартабай Айдана",
+            "Саламатова Күлайым"
+        ];
+        const tbody = document.getElementById("participantsBody");
+        participants.forEach(name => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${name}</td>
+                <td><input type="number" min="1" max="3" class="score"></td>
+                <td><input type="number" min="1" max="3" class="score"></td>
+                <td><input type="number" min="1" max="3" class="score"></td>
+                <td><input type="number" min="1" max="3" class="score"></td>
+                <td><input type="number" min="1" max="3" class="score"></td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Пікірді сақтау
+        document.getElementById("feedbackForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const feedbacks = Array.from(this.querySelectorAll("textarea")).map(area => area.value.trim());
+            let storedFeedbacks = JSON.parse(localStorage.getItem("feedbacks")) || [];
+            storedFeedbacks.push(feedbacks);
+            localStorage.setItem("feedbacks", JSON.stringify(storedFeedbacks));
+            alert("Пікіріңіз қабылданды! Рақмет!");
+            this.reset();
+        });
+
+        // Пікірлерді көрсету
+        function showFeedbacks() {
+            const feedbacks = JSON.parse(localStorage.getItem("feedbacks")) || [];
+            const container = document.getElementById("feedbackList");
+            container.innerHTML = "<h3>Барлық пікірлер:</h3>";
+            const list = document.createElement("ul");
+
+            feedbacks.forEach((feedback, index) => {
+                const li = document.createElement("li");
+                li.textContent = `Пікір #${index + 1}: ${feedback.join(" | ")}`;
+                list.appendChild(li);
+            });
+
+            container.appendChild(list);
+        }
+
+        // Құпия сөз арқылы нәтижелерді көрсету
+        function showResults() {
+            const password = prompt("Құпия сөзді енгізіңіз:");
+            if (password === "Irrada") {
+                document.getElementById("resultsSection").style.display = "block";
+            } else {
+                alert("Құпия сөз дұрыс емес!");
+            }
+        }
+
+        // Жалпы ұпайды есептеу
+        function calculateScores() {
+            const rows = document.querySelectorAll("#scoreTable tbody tr");
+            const results = document.getElementById("resultsList");
+            results.innerHTML = "";
+
+            rows.forEach((row) => {
+                const inputs = row.querySelectorAll(".score");
+                let total = 0;
+                inputs.forEach(input => {
+                    let val = parseInt(input.value);
+                    if (!isNaN(val) && val >= 1 && val <= 3) {
+                        total += val;
+                    }
+                });
+                const li = document.createElement("li");
+                li.textContent = `${row.cells[0].textContent}: Жалпы ұпай – ${total}`;
+                results.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
