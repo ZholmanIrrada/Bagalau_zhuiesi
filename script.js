@@ -36,7 +36,7 @@ const firebaseConfig = {
     });
 
     // Firestore-ға сақтау
-    db.collection("feedbacks").add(formData)
+    db.collection("Bagalau").add(formData)
         .then(() => {
             alert("Пікіріңіз сәтті сақталды! Рақмет!");
             document.getElementById("feedbackForm").reset();
